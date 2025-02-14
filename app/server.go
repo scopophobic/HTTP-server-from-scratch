@@ -1,39 +1,31 @@
 package main
-
 import (
 	"fmt"
+	// Uncomment this block to pass the first stage
 	"net"
 	"os"
+	"strings"
 )
-
 func main() {
-	fmt.Println("Server is listening on port 4221...")
-
+	// You can use print statements as follows for debugging, they'll be visible when running tests.
+	fmt.Println("Logs from your program will appear here!")
+	// Uncomment this block to pass the first stage
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
-		fmt.Println("Failed to bind to port 4221:", err)
+		fmt.Println("Failed to bind to port 4221")
 		os.Exit(1)
 	}
-	defer l.Close()
-
-	for {
-		conn, err := l.Accept()
-		if err != nil {
-			fmt.Println("Error accepting connection:", err)
-			continue
-		}
-
-		// Handle the connection in a separate goroutine
-		go handleConnection(conn)
-	}
-}
-
-func handleConnection(conn net.Conn) {
-	defer conn.Close()
-	fmt.Println("New client connected")
-
-	_, err := conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+	conn, err := l.Accept()
 	if err != nil {
-		fmt.Println("Error writing to connection:", err)
+		fmt.Println("Error accepting connection: ", err.Error())
+		os.Exit(1)
 	}
+	req := make([]byte, 1024)
+	conn.Read(req)
+	if !strings.HasPrefix(string(req), "GET / HTTP/1.1") {
+		conn.Write([]byte("HTTP/1.1 404 Not Found\r\n\r\n"))
+		conn.Close()
+		return
+	}
+	conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 }
